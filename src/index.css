@@ -26,11 +26,10 @@ body {
   --muted-panel: #151515;
   --border: #232323;
   --text: #e5e5e5;
-  --accent: #22c55e; /* neon green */
+  --accent: #22c55e; 
   --glass: rgba(255,255,255,0.02);
 }
 
-/* reset / base */
 * { box-sizing: border-box; }
 html,body,#root { height: 100%; }
 body {
@@ -45,7 +44,6 @@ body {
   line-height: 1.45;
 }
 
-/* layout */
 .app-root {
   min-height: 100vh;
   padding: clamp(16px, 3vw, 48px);
@@ -54,7 +52,6 @@ body {
   gap: 24px;
 }
 
-/* header */
 .app-header {
   display: flex;
   align-items: center;
