@@ -1,41 +1,34 @@
 // utils/recorder.js
 
-const MAX_EVENTS = 100; // max events to keep
-let events = []; // ring buffer
+const MAX_EVENTS = 100;
+let events = [];
+let isRecording = false;
+let scrollTimeout;
+
 function getSelector(el) {
   if (!el) return null;
-
-  // 1. ID is the strongest
   if (el.id) return `#${el.id}`;
-
-  // 2. Reasonable class selectors
   if (el.className && typeof el.className === "string") {
     const clean = el.className.trim().replace(/\s+/g, ".");
     if (clean.length > 0) return `.${clean}`;
   }
-
-  // 3. Tag + nth-child fallback
   const tag = el.tagName.toLowerCase();
   const parent = el.parentElement;
-
   if (!parent) return tag;
-
   const children = Array.from(parent.children);
   const index = children.indexOf(el) + 1;
-
   return `${tag}:nth-child(${index})`;
 }
 
 function addEvent(event) {
+  if (!isRecording) return;
   if (events.length >= MAX_EVENTS) {
-    events.shift(); // remove oldest
+    events.shift();
   }
   events.push(event);
 }
 
-// Listen for clicks
-export function startRecorder() {
-  document.addEventListener("click", (e) => {
+const clickHandler = (e) => {
   addEvent({
     type: "click",
     x: e.clientX,
@@ -43,35 +36,54 @@ export function startRecorder() {
     timestamp: Date.now(),
     tagName: e.target.tagName,
   });
-});
+};
 
-  // Listen for input changes (record element selector + value)
-document.addEventListener("input", (e) => {
+const inputHandler = (e) => {
   addEvent({
     type: "input",
-    selector: e.target.id || e.target.className || e.target.tagName,
+    selector: getSelector(e.target),
     value: e.target.value,
     timestamp: Date.now(),
   });
-});
+};
 
-
-  // Listen for scrolls
-  window.addEventListener("scroll", () => {
+const scrollHandler = () => {
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
     addEvent({
       type: "scroll",
       scrollY: window.scrollY,
       timestamp: Date.now(),
     });
-  });
+  }, 150);
+};
+
+export function startRecorder() {
+  if (isRecording) return;
+  isRecording = true;
+  events = [];
+
+  document.addEventListener("click", clickHandler);
+  document.addEventListener("input", inputHandler);
+  window.addEventListener("scroll", scrollHandler);
 }
 
-// Export current events as JSON
+export function stopRecorder() {
+  isRecording = false;
+  document.removeEventListener("click", clickHandler);
+  document.removeEventListener("input", inputHandler);
+  window.removeEventListener("scroll", scrollHandler);
+  clearTimeout(scrollTimeout);
+}
+
 export function exportEvents() {
   return JSON.stringify(events, null, 2);
 }
 
-// Reset recorded events
 export function clearEvents() {
   events = [];
+}
+
+export function getEvents() {
+  return events;
 }
